@@ -1,11 +1,12 @@
-﻿using BookStoreApi.Models;
+﻿using BookStoreApi.Interfaces;
+using BookStoreApi.Models;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using System.Threading.Tasks;
 
 namespace BookStoreApi.Services;
 
-public class AuthorsService : MongoDbService<Author>
+public class AuthorsService : MongoDbService<Author>, IAuthorsService
 {
     public AuthorsService(IMongoDatabase database) : base(database)
     {

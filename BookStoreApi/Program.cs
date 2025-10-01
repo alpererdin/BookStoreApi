@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 using System.Text;
+using BookStoreApi.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,9 +18,9 @@ builder.Services.AddSingleton<IMongoDatabase>(sp =>
     return client.GetDatabase(dbSettings.DatabaseName);
 });
 
-builder.Services.AddSingleton<BooksService>();
-builder.Services.AddSingleton<AuthorsService>();
-builder.Services.AddSingleton<UsersService>();
+builder.Services.AddSingleton<IBooksService, BooksService>();
+builder.Services.AddSingleton<IAuthorsService, AuthorsService>();
+builder.Services.AddSingleton<IUsersService, UsersService>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(

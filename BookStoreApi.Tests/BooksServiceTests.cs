@@ -2,34 +2,25 @@ using Xunit;
 using Moq;
 using Microsoft.AspNetCore.Mvc;
 using BookStoreApi.Controllers;
-using BookStoreApi.Services;
 using BookStoreApi.Models;
 using BookStoreApi.Models.DTOs.Requests;
 using BookStoreApi.Models.DTOs.Responses;
-using MongoDB.Driver;
+using BookStoreApi.Interfaces;
+using System.Threading.Tasks;
 
 namespace BookStoreApi.Tests;
 
 public class BooksControllerTests
 {
-    private readonly Mock<BooksService> _booksService;
-    private readonly Mock<AuthorsService> _authorsService;
+    private readonly Mock<IBooksService> _booksServiceMock;
+    private readonly Mock<IAuthorsService> _authorsServiceMock;
     private readonly BooksController _controller;
 
     public BooksControllerTests()
     {
-        var mockDatabase = new Mock<IMongoDatabase>();
-        var mockBookCollection = new Mock<IMongoCollection<Book>>();
-        var mockAuthorCollection = new Mock<IMongoCollection<Author>>();
-
-        mockDatabase.Setup(x => x.GetCollection<Book>(It.IsAny<string>(), null))
-            .Returns(mockBookCollection.Object);
-        mockDatabase.Setup(x => x.GetCollection<Author>(It.IsAny<string>(), null))
-            .Returns(mockAuthorCollection.Object);
-
-        _booksService = new Mock<BooksService>(mockDatabase.Object) { CallBase = false };
-        _authorsService = new Mock<AuthorsService>(mockDatabase.Object) { CallBase = false };
-        _controller = new BooksController(_booksService.Object, _authorsService.Object);
+        _booksServiceMock = new Mock<IBooksService>();
+        _authorsServiceMock = new Mock<IAuthorsService>();
+        _controller = new BooksController(_booksServiceMock.Object, _authorsServiceMock.Object);
     }
 
     [Fact]
@@ -44,13 +35,14 @@ public class BooksControllerTests
             NewAuthorName = "New Author"
         };
 
-        _authorsService.Setup(x => x.GetByNameAsync("New Author")).ReturnsAsync((Author?)null);
-        _authorsService.Setup(x => x.CreateAsync(It.IsAny<Author>()))
+        _authorsServiceMock.Setup(x => x.GetByNameAsync("New Author"))
+            .ReturnsAsync((Author?)null);
+        _authorsServiceMock.Setup(x => x.CreateAsync(It.IsAny<Author>()))
             .Callback<Author>(a => a.Id = "author1")
             .Returns(Task.CompletedTask);
-        _booksService.Setup(x => x.GetByNameAndAuthorAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _booksServiceMock.Setup(x => x.GetByNameAndAuthorAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync((Book?)null);
-        _booksService.Setup(x => x.CreateAsync(It.IsAny<Book>()))
+        _booksServiceMock.Setup(x => x.CreateAsync(It.IsAny<Book>()))
             .Callback<Book>(b => b.Id = "book1")
             .Returns(Task.CompletedTask);
 
@@ -70,8 +62,8 @@ public class BooksControllerTests
         Assert.Equal("Fiction", apiResponse.Data.Category);
         Assert.Equal("New Author", apiResponse.Data.AuthorName);
 
-        _authorsService.Verify(x => x.CreateAsync(It.IsAny<Author>()), Times.Once);
-        _booksService.Verify(x => x.CreateAsync(It.IsAny<Book>()), Times.Once);
+        _authorsServiceMock.Verify(x => x.CreateAsync(It.IsAny<Author>()), Times.Once);
+        _booksServiceMock.Verify(x => x.CreateAsync(It.IsAny<Book>()), Times.Once);
     }
 
     [Fact]
@@ -92,10 +84,11 @@ public class BooksControllerTests
             NewAuthorName = "Existing Author"
         };
 
-        _authorsService.Setup(x => x.GetByNameAsync("Existing Author")).ReturnsAsync(existingAuthor);
-        _booksService.Setup(x => x.GetByNameAndAuthorAsync(It.IsAny<string>(), "author123"))
+        _authorsServiceMock.Setup(x => x.GetByNameAsync("Existing Author"))
+            .ReturnsAsync(existingAuthor);
+        _booksServiceMock.Setup(x => x.GetByNameAndAuthorAsync(It.IsAny<string>(), "author123"))
             .ReturnsAsync((Book?)null);
-        _booksService.Setup(x => x.CreateAsync(It.IsAny<Book>()))
+        _booksServiceMock.Setup(x => x.CreateAsync(It.IsAny<Book>()))
             .Callback<Book>(b => b.Id = "book1")
             .Returns(Task.CompletedTask);
 
@@ -112,8 +105,8 @@ public class BooksControllerTests
         Assert.Equal("author123", apiResponse.Data.AuthorId);
         Assert.Equal("Existing Author", apiResponse.Data.AuthorName);
 
-        _authorsService.Verify(x => x.CreateAsync(It.IsAny<Author>()), Times.Never);
-        _booksService.Verify(x => x.CreateAsync(It.IsAny<Book>()), Times.Once);
+        _authorsServiceMock.Verify(x => x.CreateAsync(It.IsAny<Author>()), Times.Never);
+        _booksServiceMock.Verify(x => x.CreateAsync(It.IsAny<Book>()), Times.Once);
     }
 
     [Fact]
@@ -128,7 +121,8 @@ public class BooksControllerTests
             AuthorId = "invalid-id"
         };
 
-        _authorsService.Setup(x => x.GetAsync("invalid-id")).ReturnsAsync((Author?)null);
+        _authorsServiceMock.Setup(x => x.GetAsync("invalid-id"))
+            .ReturnsAsync((Author?)null);
 
         // Act
         var result = await _controller.Post(request);
@@ -163,9 +157,9 @@ public class BooksControllerTests
             AuthorId = "author1"
         };
 
-        _authorsService.Setup(x => x.GetAsync("author1"))
+        _authorsServiceMock.Setup(x => x.GetAsync("author1"))
             .ReturnsAsync(new Author { Id = "author1", AuthorName = "Test Author" });
-        _booksService.Setup(x => x.GetByNameAndAuthorAsync("Same Book", "author1"))
+        _booksServiceMock.Setup(x => x.GetByNameAndAuthorAsync("Same Book", "author1"))
             .ReturnsAsync(existingBook);
 
         // Act
@@ -189,7 +183,6 @@ public class BooksControllerTests
             BookName = "Test Book",
             Price = 30m,
             Category = "Horror"
-             
         };
 
         // Act
@@ -202,6 +195,5 @@ public class BooksControllerTests
 
         Assert.False(apiResponse.Success);
         Assert.Contains("You must provide either an existing Author", apiResponse.Message);
-
     }
 }

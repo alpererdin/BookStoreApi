@@ -1,4 +1,5 @@
-﻿using BookStoreApi.Models;
+﻿using BookStoreApi.Interfaces;
+using BookStoreApi.Models;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;  
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace BookStoreApi.Services;
 
-public class BooksService : MongoDbService<Book>
+public class BooksService : MongoDbService<Book>, IBooksService
 {
     public BooksService(IMongoDatabase database) : base(database)
     {

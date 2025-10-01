@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using System.Reflection;
 using ZstdSharp.Unsafe;
-
+using BookStoreApi.Interfaces;
 namespace BookStoreApi.Services;
 
 public class MongoDbService<T> where T : IBaseEntity

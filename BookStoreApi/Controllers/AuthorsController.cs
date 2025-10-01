@@ -186,6 +186,6 @@ public class AuthorsController : ControllerBase
 
         await _authorsService.RemoveAsync(id);
 
-        return Ok(ApiResponse<object>.SuccessResponse(null, "Author deleted successfully"));
+        return Ok(ApiResponse<object>.SuccessResponse(null!, "Author deleted successfully"));
     }
 }

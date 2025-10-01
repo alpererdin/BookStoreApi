@@ -10,10 +10,11 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using BookStoreApi.Interfaces;
 
 namespace BookStoreApi.Services;
 
-public class UsersService : MongoDbService<User>
+public class UsersService : MongoDbService<User>, IUsersService
 {
     private readonly IConfiguration _configuration;
 
