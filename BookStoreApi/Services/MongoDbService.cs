@@ -9,7 +9,7 @@ namespace BookStoreApi.Services;
 
 public class MongoDbService<T> where T : IBaseEntity
 {
-    private readonly IMongoCollection<T> _collection;
+    protected readonly IMongoCollection<T> _collection;
 
     public MongoDbService(IOptions<BookStoreDatabaseSettings> options)
     {
