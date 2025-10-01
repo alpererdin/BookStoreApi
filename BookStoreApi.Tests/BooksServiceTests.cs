@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using BookStoreApi.Controllers;
 using BookStoreApi.Services;
 using BookStoreApi.Models;
-using BookStoreApi.Models.DTOs;
+using BookStoreApi.Models.DTOs.Requests;
+using BookStoreApi.Models.DTOs.Responses;
 using MongoDB.Driver;
 
 namespace BookStoreApi.Tests;
@@ -17,7 +18,6 @@ public class BooksControllerTests
 
     public BooksControllerTests()
     {
-        // Mock IMongoDatabase and IMongoCollection
         var mockDatabase = new Mock<IMongoDatabase>();
         var mockBookCollection = new Mock<IMongoCollection<Book>>();
         var mockAuthorCollection = new Mock<IMongoCollection<Author>>();
@@ -58,9 +58,18 @@ public class BooksControllerTests
         var result = await _controller.Post(request);
 
         // Assert
-        var created = Assert.IsType<CreatedAtActionResult>(result);
-        var book = Assert.IsType<Book>(created.Value);
-        Assert.Equal("Test Book", book.BookName);
+        var actionResult = Assert.IsType<ActionResult<ApiResponse<BookResponse>>>(result);
+        var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
+        var apiResponse = Assert.IsType<ApiResponse<BookResponse>>(createdResult.Value);
+
+        Assert.True(apiResponse.Success);
+        Assert.Equal("Book created successfully", apiResponse.Message);
+        Assert.NotNull(apiResponse.Data);
+        Assert.Equal("Test Book", apiResponse.Data.BookName);
+        Assert.Equal(50m, apiResponse.Data.Price);
+        Assert.Equal("Fiction", apiResponse.Data.Category);
+        Assert.Equal("New Author", apiResponse.Data.AuthorName);
+
         _authorsService.Verify(x => x.CreateAsync(It.IsAny<Author>()), Times.Once);
         _booksService.Verify(x => x.CreateAsync(It.IsAny<Book>()), Times.Once);
     }
@@ -87,16 +96,24 @@ public class BooksControllerTests
         _booksService.Setup(x => x.GetByNameAndAuthorAsync(It.IsAny<string>(), "author123"))
             .ReturnsAsync((Book?)null);
         _booksService.Setup(x => x.CreateAsync(It.IsAny<Book>()))
+            .Callback<Book>(b => b.Id = "book1")
             .Returns(Task.CompletedTask);
 
         // Act
         var result = await _controller.Post(request);
 
         // Assert
-        var created = Assert.IsType<CreatedAtActionResult>(result);
-        var book = Assert.IsType<Book>(created.Value);
-        Assert.Equal("author123", book.AuthorId);
+        var actionResult = Assert.IsType<ActionResult<ApiResponse<BookResponse>>>(result);
+        var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
+        var apiResponse = Assert.IsType<ApiResponse<BookResponse>>(createdResult.Value);
+
+        Assert.True(apiResponse.Success);
+        Assert.NotNull(apiResponse.Data);
+        Assert.Equal("author123", apiResponse.Data.AuthorId);
+        Assert.Equal("Existing Author", apiResponse.Data.AuthorName);
+
         _authorsService.Verify(x => x.CreateAsync(It.IsAny<Author>()), Times.Never);
+        _booksService.Verify(x => x.CreateAsync(It.IsAny<Book>()), Times.Once);
     }
 
     [Fact]
@@ -117,8 +134,12 @@ public class BooksControllerTests
         var result = await _controller.Post(request);
 
         // Assert
-        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal("The provided AuthorId does not exist.", badRequest.Value);
+        var actionResult = Assert.IsType<ActionResult<ApiResponse<BookResponse>>>(result);
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult.Result);
+        var apiResponse = Assert.IsType<ApiResponse<BookResponse>>(badRequestResult.Value);
+
+        Assert.False(apiResponse.Success);
+        Assert.Equal("The provided AuthorId does not exist.", apiResponse.Message);
     }
 
     [Fact]
@@ -151,7 +172,36 @@ public class BooksControllerTests
         var result = await _controller.Post(request);
 
         // Assert
-        var conflict = Assert.IsType<ConflictObjectResult>(result);
-        Assert.Contains("already exists", conflict.Value?.ToString());
+        var actionResult = Assert.IsType<ActionResult<ApiResponse<BookResponse>>>(result);
+        var conflictResult = Assert.IsType<ConflictObjectResult>(actionResult.Result);
+        var apiResponse = Assert.IsType<ApiResponse<BookResponse>>(conflictResult.Value);
+
+        Assert.False(apiResponse.Success);
+        Assert.Contains("already exists", apiResponse.Message);
+    }
+
+    [Fact]
+    public async Task Post_WithMissingAuthorInfo_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new CreateBookRequest
+        {
+            BookName = "Test Book",
+            Price = 30m,
+            Category = "Horror"
+             
+        };
+
+        // Act
+        var result = await _controller.Post(request);
+
+        // Assert
+        var actionResult = Assert.IsType<ActionResult<ApiResponse<BookResponse>>>(result);
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult.Result);
+        var apiResponse = Assert.IsType<ApiResponse<BookResponse>>(badRequestResult.Value);
+
+        Assert.False(apiResponse.Success);
+        Assert.Contains("You must provide either an existing Author", apiResponse.Message);
+
     }
 }
