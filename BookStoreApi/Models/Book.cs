@@ -1,4 +1,5 @@
 ﻿
+using BookStoreApi.Attributes;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
@@ -7,6 +8,7 @@ using System.Text.Json.Serialization;
 namespace BookStoreApi.Models
 {
 
+    [CollectionName("Books")]
     public class Book : IBaseEntity
     {
         [BsonId]

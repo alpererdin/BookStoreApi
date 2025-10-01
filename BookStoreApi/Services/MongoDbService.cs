@@ -1,6 +1,8 @@
-﻿using BookStoreApi.Models;
+﻿using BookStoreApi.Attributes;
+using BookStoreApi.Models;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using System.Reflection;
 using ZstdSharp.Unsafe;
 
 namespace BookStoreApi.Services;
@@ -12,13 +14,17 @@ public class MongoDbService<T> where T : IBaseEntity
     public MongoDbService(IOptions<BookStoreDatabaseSettings> options)
     {
 
-        var mongoClient = new MongoClient(
-            options.Value.ConnectionString);
+        var mongoClient = new MongoClient("mongodb://localhost:27017");
+        var mongoDatabase = mongoClient.GetDatabase("BookStore");
 
-        var mongoDatabase = mongoClient.GetDatabase(
-            options.Value.DatabaseName);
+        var collectionName = typeof(T)
+                                .GetCustomAttribute<CollectionNameAttribute>()?
+                                .Name;
 
-        var collectionName = typeof(T).Name + "s";
+        if (string.IsNullOrEmpty(collectionName))
+        {
+            throw new ArgumentException("CollectionName attribute not defined.");
+        }
 
         _collection = mongoDatabase.GetCollection<T>(collectionName);   
 

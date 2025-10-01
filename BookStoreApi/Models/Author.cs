@@ -1,9 +1,12 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
+using BookStoreApi.Attributes;
 
 namespace BookStoreApi.Models;
 
+
+[CollectionName("Authors")] 
     public class Author : IBaseEntity
     {
     [BsonId]
