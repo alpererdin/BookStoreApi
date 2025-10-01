@@ -1,16 +1,15 @@
 ﻿using BookStoreApi.Models;
 using BookStoreApi.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
-using FluentValidation;  // ✅ Sadece bunu kullanıyoruz
-using BookStoreApi.Models.DTOs.Validators;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
  
-var dbSettings = builder.Configuration
-    .GetSection("BookStoreDatabase")
-    .Get<BookStoreDatabaseSettings>()
-    ?? throw new InvalidOperationException("BookStoreDatabase config missing!");
+var dbSettings = builder.Configuration.GetSection("BookStoreDatabase").Get<BookStoreDatabaseSettings>()!;
 
 builder.Services.AddSingleton<IMongoDatabase>(sp =>
 {
@@ -18,36 +17,72 @@ builder.Services.AddSingleton<IMongoDatabase>(sp =>
     return client.GetDatabase(dbSettings.DatabaseName);
 });
 
-builder.Services.AddSingleton(typeof(MongoDbService<>));
-
- 
 builder.Services.AddSingleton<BooksService>();
 builder.Services.AddSingleton<AuthorsService>();
+builder.Services.AddSingleton<UsersService>();
 
- 
-builder.Services.AddValidatorsFromAssemblyContaining<CreateBookRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateAuthorRequestValidator>();
- 
 builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-        options.JsonSerializerOptions.PropertyNamingPolicy = null);
- 
+    .AddJsonOptions(
+        options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
+
+// ---  
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
+                .GetBytes(builder.Configuration.GetSection("AppSettings:Token").Value!)),
+            ValidateIssuer = false,
+            ValidateAudience = false
+        };
+    });
+// --- 
+
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddSwaggerGen(opt =>
 {
-    c.SwaggerDoc("v1", new() { Title = "BookStore API", Version = "v1" });
+    opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "bearer"
+    });
+    opt.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type=ReferenceType.SecurityScheme,
+                    Id="Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
 });
 
 var app = builder.Build();
+
  
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "BookStore API v1"));
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
+
+ 
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

@@ -1,12 +1,14 @@
 ﻿using BookStoreApi.Models;
-using BookStoreApi.Services;
-using Microsoft.AspNetCore.Mvc;
 using BookStoreApi.Models.DTOs.Requests;
 using BookStoreApi.Models.DTOs.Responses;
+using BookStoreApi.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BookStoreApi.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class BooksController : ControllerBase
 {
@@ -207,6 +209,6 @@ public class BooksController : ControllerBase
 
         await _booksService.RemoveAsync(id);
 
-        return Ok(ApiResponse<object>.SuccessResponse(null, "Book deleted successfully"));
+        return Ok(ApiResponse<object>.SuccessResponse(null!, "Book deleted successfully"));
     }
 }
