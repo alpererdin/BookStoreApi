@@ -7,10 +7,11 @@ namespace BookStoreApi.Services;
 
 public class AuthorsService : MongoDbService<Author>
 {
-    public AuthorsService(IOptions<BookStoreDatabaseSettings> options) : base(options)
+    public AuthorsService(IMongoDatabase database) : base(database)
     {
     }
 
-    public async Task<Author?> GetByNameAsync(string name) =>
+
+    public virtual async Task<Author?> GetByNameAsync(string name) =>
         await _collection.Find(x => x.AuthorName == name).FirstOrDefaultAsync();
 }
