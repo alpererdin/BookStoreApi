@@ -5,16 +5,16 @@ using BookStoreApi.Attributes;
 
 namespace BookStoreApi.Models;
 
-
-[CollectionName("Authors")] 
-    public class Author : IBaseEntity
-    {
+[CollectionName("Authors")]
+public class Author : IBaseEntity
+{
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
-
     public string? Id { get; set; }
+
     public required string AuthorName { get; set; }
 
+    public string? Biography { get; set; }   
 
-    }
-
+    public int? BirthYear { get; set; }    
+}

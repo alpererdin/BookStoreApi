@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BookStoreApi.Models.DTOs;
+namespace BookStoreApi.Models.DTOs.Requests;
 
 public class CreateBookRequest
 {
@@ -8,6 +8,7 @@ public class CreateBookRequest
     [StringLength(100, MinimumLength = 1, ErrorMessage = "Book name must be between 1 and 100 characters")]
     public required string BookName { get; set; }
 
+    [Required(ErrorMessage = "Price is required")]
     [Range(0.01, 10000, ErrorMessage = "Price must be between 0.01 and 10000")]
     public decimal Price { get; set; }
 
