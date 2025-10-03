@@ -22,11 +22,12 @@ public class BooksController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<BookResponse>>>> Get()
+    public async Task<ActionResult<ApiResponse<List<BookResponse>>>> Get([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var books = await _booksService.GetAsync();
+        var books = await _booksService.GetPagedAsync(page, pageSize);
 
- 
+
+
         var bookResponses = new List<BookResponse>();
         foreach (var book in books)
         {
@@ -38,7 +39,7 @@ public class BooksController : ControllerBase
                 Price = book.Price,
                 Category = book.Category,
                 AuthorId = book.AuthorId,
-                AuthorName = author?.AuthorName // Yazar ismini ekle
+                AuthorName = author?.AuthorName  
             });
         }
 

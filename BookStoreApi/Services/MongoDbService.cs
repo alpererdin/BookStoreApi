@@ -40,5 +40,12 @@ public class MongoDbService<T> where T : IBaseEntity
 
     public virtual async Task RemoveAsync(string id) =>
         await _collection.DeleteOneAsync(x => x.Id == id);
+
+    public virtual async Task<List<T>> GetPagedAsync(int page, int pageSize) =>
+    await _collection.Find(_ => true)
+        .SortBy(x => x.Id) 
+        .Skip((page - 1) * pageSize)
+        .Limit(pageSize)
+        .ToListAsync();
 }
 

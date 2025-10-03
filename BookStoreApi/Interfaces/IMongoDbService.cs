@@ -7,6 +7,7 @@ namespace BookStoreApi.Interfaces;
 public interface IMongoDbService<T> where T : IBaseEntity
 {
     Task<List<T>> GetAsync();
+    Task<List<T>> GetPagedAsync(int page, int pageSize);
     Task<T?> GetAsync(string id);
     Task CreateAsync(T newItem);
     Task UpdateAsync(string id, T updatedItem);

@@ -3,6 +3,7 @@ using BookStoreApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using BookStoreApi.Models.DTOs.Requests;
 using BookStoreApi.Models.DTOs.Responses;
+using BookStoreApi.Interfaces;
 
 namespace BookStoreApi.Controllers;
 
@@ -10,10 +11,10 @@ namespace BookStoreApi.Controllers;
 [Route("api/[controller]")]
 public class AuthorsController : ControllerBase
 {
-    private readonly AuthorsService _authorsService;
-    private readonly BooksService _booksService;
+    private readonly IAuthorsService _authorsService;
+    private readonly IBooksService _booksService;
 
-    public AuthorsController(AuthorsService authorsService, BooksService booksService)
+    public AuthorsController(IAuthorsService authorsService, IBooksService booksService)
     {
         _authorsService = authorsService;
         _booksService = booksService;
