@@ -3,6 +3,7 @@ using BookStoreApi.Models.DTOs.Requests;
 using BookStoreApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using BookStoreApi.Interfaces;
 
 namespace BookStoreApi.Controllers;
 
@@ -10,9 +11,9 @@ namespace BookStoreApi.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly UsersService _usersService;
+    private readonly IUsersService _usersService;
 
-    public AuthController(UsersService usersService)
+    public AuthController(IUsersService usersService)
     {
         _usersService = usersService;
     }
