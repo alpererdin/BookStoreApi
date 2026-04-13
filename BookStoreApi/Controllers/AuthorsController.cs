@@ -25,12 +25,12 @@ public class AuthorsController : ControllerBase
     public async Task<ActionResult<ApiResponse<List<AuthorResponse>>>> Get()
     {
         var authors = await _authorsService.GetAsync();
-
+        var books = await _booksService.GetAsync();
         var authorResponses = new List<AuthorResponse>();
         foreach (var author in authors)
         {
         
-            var books = await _booksService.GetAsync();
+          
             var bookCount = books.Count(b => b.AuthorId == author.Id);
 
             authorResponses.Add(new AuthorResponse
