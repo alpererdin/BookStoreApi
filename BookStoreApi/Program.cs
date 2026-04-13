@@ -6,10 +6,12 @@ using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 using System.Text;
 using BookStoreApi.Interfaces;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using BookStoreApi.Models.DTOs.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
- 
 var dbSettings = builder.Configuration.GetSection("BookStoreDatabase").Get<BookStoreDatabaseSettings>()!;
 
 builder.Services.AddSingleton<IMongoDatabase>(sp =>
@@ -26,7 +28,9 @@ builder.Services.AddControllers()
     .AddJsonOptions(
         options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
 
-// ---  
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateBookRequestValidator>();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -39,7 +43,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = false
         };
     });
-// --- 
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(opt =>
@@ -60,8 +63,8 @@ builder.Services.AddSwaggerGen(opt =>
             {
                 Reference = new OpenApiReference
                 {
-                    Type=ReferenceType.SecurityScheme,
-                    Id="Bearer"
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
                 }
             },
             new string[]{}
@@ -71,17 +74,11 @@ builder.Services.AddSwaggerGen(opt =>
 
 var app = builder.Build();
 
- 
-if (app.Environment.IsDevelopment())
-{
-    
-}
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
- 
 app.UseAuthentication();
 app.UseAuthorization();
 
